@@ -2,6 +2,7 @@
 
 const express = require("express");
 const mongoose = require("mongoose");
+const morgan = require("morgan");
 
 // Mongoose internally uses a promise-like object,
 // but its better to make Mongoose use built in es6 promises
@@ -10,33 +11,25 @@ mongoose.Promise = global.Promise;
 // config.js is where we control constants for entire
 // app like PORT and DATABASE_URL
 const { PORT, DATABASE_URL } = require("./config");
-const { Restaurant } = require("./models");
+const { BlogPost } = require("./models");
 
 const app = express();
+
+app.use(morgan("common"));
 app.use(express.json());
 
 // GET requests to /restaurants => return 10 restaurants
-app.get("/restaurants", (req, res) => {
-  const filters = {};
-  const queryableFields = ['cuisine', 'borough'];
+app.get("/blog-posts", (req, res) => {
 
-  queryableFields.forEach(field => {
-    if (req.query[field]) {
-      filters[field] = req.query[field];
-    }
-  });
-
-  Restaurant.find(filters)
+  BlogPost.find()
     // we're limiting because restaurants db has > 25,000
     // documents, and that's too much to process/return
     // .limit()
     // success callback: for each restaurant we got back, we'll
     // call the `.serialize` instance method we've created in
     // models.js in order to only expose the data we want the API return.    
-    .then(restaurants => {
-      res.json({
-        restaurants: restaurants.map(restaurant => restaurant.serialize())
-      });
+    .then(blogPosts => {
+      res.json(blogPosts.map(blogPost => blogPost.serialize()));
     })
     .catch(err => {
       console.error(err);
@@ -45,20 +38,20 @@ app.get("/restaurants", (req, res) => {
 });
 
 // can also request by ID
-app.get("/restaurants/:id", (req, res) => {
-  Restaurant
+app.get("/blog-posts/:id", (req, res) => {
+  BlogPost
     // this is a convenience method Mongoose provides for searching
     // by the object _id property
     .findById(req.params.id)
-    .then(restaurant => res.json(restaurant.serialize()))
+    .then(blogPost => res.json(blogPost.serialize()))
     .catch(err => {
       console.error(err);
       res.status(500).json({ message: "Internal server error" });
     });
 });
 
-app.post("/restaurants", (req, res) => {
-  const requiredFields = ["name", "borough", "cuisine"];
+app.post("/blog-posts", (req, res) => {
+  const requiredFields = ["title", "content", "author"];
   for (let i = 0; i < requiredFields.length; i++) {
     const field = requiredFields[i];
     if (!(field in req.body)) {
@@ -68,21 +61,19 @@ app.post("/restaurants", (req, res) => {
     }
   }
 
-  Restaurant.create({
-    name: req.body.name,
-    borough: req.body.borough,
-    cuisine: req.body.cuisine,
-    grades: req.body.grades,
-    address: req.body.address
+  BlogPost.create({
+    title: req.body.title,
+    content: req.body.content,
+    author: req.body.author
   })
-    .then(restaurant => res.status(201).json(restaurant.serialize()))
+    .then(blogPost => res.status(201).json(blogPost.serialize()))
     .catch(err => {
       console.error(err);
       res.status(500).json({ message: "Internal server error" });
     });
 });
 
-app.put("/restaurants/:id", (req, res) => {
+app.put("/blog-posts/:id", (req, res) => {
   // ensure that the id in the request path and the one in request body match
   if (!(req.params.id && req.body.id && req.params.id === req.body.id)) {
     const message =
@@ -96,7 +87,7 @@ app.put("/restaurants/:id", (req, res) => {
   // if the user sent over any of the updatableFields, we udpate those values
   // in document
   const toUpdate = {};
-  const updateableFields = ["name", "borough", "cuisine", "address"];
+  const updateableFields = ["title", "content", "author"];
 
   updateableFields.forEach(field => {
     if (field in req.body) {
@@ -104,16 +95,16 @@ app.put("/restaurants/:id", (req, res) => {
     }
   });
 
-  Restaurant
+  BlogPost
     // all key/value pairs in toUpdate will be updated -- that's what `$set` does
     .findByIdAndUpdate(req.params.id, { $set: toUpdate })
-    .then(restaurant => res.status(204).end())
+    .then(updatedBlogPost => res.status(204).end())
     .catch(err => res.status(500).json({ message: "Internal server error" }));
 });
 
-app.delete("/restaurants/:id", (req, res) => {
+app.delete("/blog-posts/:id", (req, res) => {
   Restaurant.findByIdAndRemove(req.params.id)
-    .then(restaurant => res.status(204).end())
+    .then(blogPost => res.status(204).end())
     .catch(err => res.status(500).json({ message: "Internal server error" }));
 });
 

@@ -19,6 +19,8 @@
   "homepage": "https://github.com/sarL3y/blog-app-mongoose#readme",
   "dependencies": {
     "express": "^4.16.4",
-    "mongoose": "^5.4.20"
+    "mongoose": "^5.4.20",
+    "morgan": "^1.9.1",
+    "uuid": "^3.3.2"
   }
 }
