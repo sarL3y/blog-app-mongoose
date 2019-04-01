@@ -2,6 +2,8 @@
 
 const mongoose = require("mongoose");
 
+mongoose.Promise = global.Promise;
+
 // this is our schema to represent a restaurant
 const blogPostSchema = mongoose.Schema({
   title: { type: String, required: true },

@@ -21,15 +21,10 @@ app.use(express.json());
 // GET requests to /restaurants => return 10 restaurants
 app.get("/blog-posts", (req, res) => {
 
-  BlogPost.find()
-    // we're limiting because restaurants db has > 25,000
-    // documents, and that's too much to process/return
-    // .limit()
-    // success callback: for each restaurant we got back, we'll
-    // call the `.serialize` instance method we've created in
-    // models.js in order to only expose the data we want the API return.    
-    .then(blogPosts => {
-      res.json(blogPosts.map(blogPost => blogPost.serialize()));
+  BlogPost
+    .find()
+    .then(posts => {
+      res.json(posts.map(post => post.serialize()));
     })
     .catch(err => {
       console.error(err);
@@ -37,11 +32,9 @@ app.get("/blog-posts", (req, res) => {
     });
 });
 
-// can also request by ID
 app.get("/blog-posts/:id", (req, res) => {
+
   BlogPost
-    // this is a convenience method Mongoose provides for searching
-    // by the object _id property
     .findById(req.params.id)
     .then(blogPost => res.json(blogPost.serialize()))
     .catch(err => {
